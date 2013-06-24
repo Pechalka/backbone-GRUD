@@ -77,6 +77,15 @@ var ListView = Backbone.Epoxy.View.extend({
 
 	    bindings : opt.form.bindings,	    
 	    initialize: function(opt) {
+			
+	    	for(var model in this.bindingSources){
+	    		this.bindingSources[model].fetch();
+	    	}
+	    	
+	    	if (!this.model.isNew())
+				this.model.fetch();
+
+
 	    	var template = _.template(opt.templateText);
 	    	this.$el.html(template());
 
@@ -117,8 +126,7 @@ var ListView = Backbone.Epoxy.View.extend({
 		self.show(form);
 	}
 
-	self.start = function(init){
-		init();
+	self.start = function(){
 		self.collection = new ListCollection();
 		self.collection.on('details', self.details, self);
 		self.list();

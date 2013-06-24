@@ -33,13 +33,25 @@ app.put('/api/events/:id',function(req, res){
 	for (var i = items.length - 1; i >= 0; i--) {
 		if (items[i]._id == id){
 			items[i].name = item.name;
-			items[i].typeId = items.typeId;
+			items[i].typeId = item.typeId;
 		}
 	};
 
 	res.json(item);
 });
 
+app.get('/api/events/:id',function(req, res){
+	var item;
+	var id = req.params["id"];
+	for (var i = items.length - 1; i >= 0; i--) {
+		if (items[i]._id == id){
+			item = items[i];
+			break;
+		}
+	}
+	res.json(item);
+
+});
 app.delete('/api/events/:id',function(req, res){
 	var item = req.body;
 	var id = req.params["id"];
@@ -56,7 +68,7 @@ app.delete('/api/events/:id',function(req, res){
 
 
 app.get('/api/types', function(req, res){
-	res.json([{label:"type1", value:"1"}, {label:"type2", value:"2"}]);
+	res.json([{name:"type1", _id:"1"}, {name:"type2", _id:"2"}]);
 })
 
 //app.resource('/api/events', db.Event);

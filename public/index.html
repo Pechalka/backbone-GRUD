@@ -12,7 +12,12 @@
 
     <script type="text/javascript">
         $(function() {
-            var types = new Backbone.Collection();
+            var types = new Backbone.Collection(); 
+            types.url = '/api/types';
+            types.parse = function(response){
+                return _.map(response, function(x){ return { label: x.name, value: x._id }});
+            }
+
             GRUD({
                 resurce : 'api/events',
                 container : '.container',
@@ -30,10 +35,7 @@
                         "typeId" : ""
                     }
                 }
-            }).start(function(){
-                types.url = '/api/types';
-                types.fetch();
-            });
+            }).start();
         });
     </script>
 
