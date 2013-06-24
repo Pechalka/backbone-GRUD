@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html class="no-js" lang="ru"> 
+<head>
+    <meta charset="utf-8">
+    <title>Hello world</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="libs/jquery.js" type="text/javascript"></script>
+    <script src="libs/backbone/underscore.js" type="text/javascript"></script>
+    <script src="libs/backbone/backbone.js" type="text/javascript"></script>
+    <script src="libs/backbone/backbone.epoxy.js" type="text/javascript"></script>
+    <script src="script.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        $(function() {
+            var types = new Backbone.Collection();
+            GRUD({
+                resurce : 'api/events',
+                container : '.container',
+
+                form : {
+                    bindings : {
+                        'input#name' : 'value:name',
+                        '#type' : 'value: typeId, options:$types'
+                    },
+                    bindingSources :{
+                        types: types
+                    }, 
+                    defaults:{
+                        "name" : "",
+                        "typeId" : ""
+                    }
+                }
+            }).start(function(){
+                types.url = '/api/types';
+                types.fetch();
+            });
+        });
+    </script>
+
+</head>
+ <body>
+
+<script type="text/template" id="list">
+<a href="#" class="btn add">add</a>
+	<ul data-bind='collection:$collection'>
+	<ul>
+</script>
+
+<script type="text/template" id="item">
+	<a href="#" class="edit btn">edit</a> <%= name %> 2 <a hre='#' class="delete">delete</a>
+</script>
+
+<script type="text/template" id="details">
+	<input id="name" type="text" />
+	<a href="#" class="btn save">save</a>
+	<a href="#" class="btn cansel">cansel</a>
+    <select id="type"></select>
+</script>
+
+<div class="container">
+
+</div>
+ </html>
