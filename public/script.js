@@ -1,136 +1,136 @@
+var Core = {};
 
+Core.DropDownLoader = Backbone.Collection.extend({
+	initialize : function(opt){
+		this.url = opt.url;
+		this.label = opt.label;
+		this.value = opt.value;
+	},
+	parse : function(response){
+		return _.map(response, function(x){ 
+				return { label: x[this.label], value: x[this.value] }
+		}, this);
+	}
 
+});
 
+Core.FormView = Backbone.Epoxy.View.extend({
+	template : 'FormView',
+	events : {
+		"click .save" : "saveForm",
+    	"click .cansel" : "cansel"
+	},
+	
+	saveForm : function(e){
+		var view = this;
+		this.model.save({
+	            wait: true
+	        },{
+			success : function(model){
+				view.trigger('close');
+			}
+		});
+	},
+	cansel : function(e){
+    	this.trigger('close');
+    },    
+    initialize: function(opt) {
+    	console.log('hello');
+		var template = _.template(this.template);
+    	this.$el.html(template());
 
-
-
-
-
-
-
-function GRUD(opt){
-	var self = {};
-
-var Model = Backbone.Epoxy.Model.extend({	
-	    idAttribute: "_id",
-	    defaults : opt.form.defaults
-	});
-
-var ListItemView = Backbone.View.extend({
-    tagName: "li",
-    events : {
-    	"click .edit" : "editItem",
-    	"click .delete" : "delete"
-    },
-    delete : function(e){
-    	this.model.destroy();	
-    },
-    editItem : function(e){
-    	this.model.trigger('details', this.model.get('_id'));
-    },
-
-    initialize: function() {
-    	var templateText = $("#item").html();
-    	var template = _.template(templateText);
-	    this.$el.html(template(this.model.toJSON()));  
+    	for(var model in this.bindingSources){
+    		this.bindingSources[model].fetch();
+    	}
+    	
+    	if (!this.model.isNew())
+			this.model.fetch();
+		console.log('hello2');
     }
 });
 
-var ListCollection = Backbone.Collection.extend({
-    model: Model,
-    view: ListItemView
+Core.BaseModel = Backbone.Epoxy.Model.extend({	
+    idAttribute: "_id"
 });
 
+Core.GRUD = function(opt){
 
-var ListView = Backbone.Epoxy.View.extend({
-    initialize: function(opt) {
-    	var template = _.template(opt.templateText);
-    	this.$el.html(template());
-    },
-    events : {
-    	"click .add" : "newItem"
-    },
-    newItem : function(){
-    	this.collection.trigger('details');
-    },
-});
+	var Model = (opt.Model || Core.BaseModel).extend({	
+	    urlRoot : opt.resurce
+	});
 
-	var DetailsView = Backbone.Epoxy.View.extend({
-		events : {
-			"click .save" : "saveForm",
-	    	"click .cansel" : "cansel"
-		},
-		
-		saveForm : function(e){
-			this.model.save({
-		            wait: true
-		        },{
-				success : function(model){
-					model.trigger('showList');
-				}
-			});
-		},
-		cansel : function(e){
-	    	this.model.trigger('showList');
+	
+	var ListItemView = Backbone.Epoxy.View.extend({
+		template : $("#item").html(),
+	    tagName: "tr",
+	    events : {
+	    	"click .edit" : "editItem",
+	    	"click .delete" : "delete"
 	    },
-	    bindingSources:  opt.form.bindingSources,
+	    delete : function(e){
+	    	this.model.destroy();	
+	    },
+	    editItem : function(e){
+	    	this.model.trigger('details', this.model.get('_id'));
+	    },
 
-	    bindings : opt.form.bindings,	    
-	    initialize: function(opt) {
-			
-	    	for(var model in this.bindingSources){
-	    		this.bindingSources[model].fetch();
-	    	}
-	    	
-	    	if (!this.model.isNew())
-				this.model.fetch();
-
-
-	    	var template = _.template(opt.templateText);
-	    	this.$el.html(template());
-
-	    	this.model.urlRoot = opt.resurce;
+	    initialize: function() {
+	    	var template = _.template(this.template);
+		    this.$el.html(template(this.model.toJSON()));  
 	    }
 	});
 
-	self.show = function(view){
+	var ListCollection = Backbone.Collection.extend({
+	    model: Model,
+	    view: ListItemView,
+	    url : opt.resurce
+	});
+
+
+	var ListView = Backbone.Epoxy.View.extend({
+		template : $('#list').html(),
+	    initialize: function(opt) {
+	    	var template = _.template(this.template);
+	    	this.$el.html(template());
+
+	    	this.collection.fetch();
+	    },
+	    events : {
+	    	"click .add" : "newItem"
+	    },
+	    newItem : function(){
+	    	this.collection.trigger('details');
+	    },
+	});
+
+
+	var DetailsView = opt.FormView || Core.FormView;
+
+	var show = function(view){
 		$(opt.container).empty().html(view.render().el);
 	}
 
-	self.list = function(){
-		var templateText = $('#list').html();
+	var collection =  new ListCollection();
+			
+	return {
+		list : function(){
+			
+			collection.on('details', this.details, this);
+			var listView = new ListView({ 
+				collection : collection
+			});
+			
+			show(listView);
+		},
 
-		var collection = self.collection;
-		var listView = new ListView({ 
-			templateText : templateText,
-			resurce : opt.resurce,
-			collection : collection
-		});
-		
-		collection.url = opt.resurce;
+		details : function(id){
+			var item = id ? collection.get(id) : new Model();
+			var form = new DetailsView({
+				model : item	
+			}); 
+			form.on('close', this.list, this);
+			show(form);
+		}
 
-		self.show(listView);
-
-		collection.fetch();
-	}
-
-	self.details = function(id){
-		var detailsTemplate = $('#details').html();
-		var item = id ? self.collection.get(id) : new Model();
-		var form = new DetailsView({
-			templateText : detailsTemplate,
-			resurce : opt.resurce	,
-			model : item	
-		}); 
-		item.on('showList', self.list, self);
-		self.show(form);
-	}
-
-	self.start = function(){
-		self.collection = new ListCollection();
-		self.collection.on('details', self.details, self);
-		self.list();
-	}
-
-	return self;
+	};
 }

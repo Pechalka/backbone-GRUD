@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Hello world</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" >
     <script src="libs/jquery.js" type="text/javascript"></script>
     <script src="libs/backbone/underscore.js" type="text/javascript"></script>
     <script src="libs/backbone/backbone.js" type="text/javascript"></script>
@@ -12,30 +12,52 @@
 
     <script type="text/javascript">
         $(function() {
-            var types = new Backbone.Collection(); 
-            types.url = '/api/types';
-            types.parse = function(response){
-                return _.map(response, function(x){ return { label: x.name, value: x._id }});
-            }
 
-            GRUD({
-                resurce : 'api/events',
-                container : '.container',
+            var types = new Core.DropDownLoader({
+                url : '/api/types',
+                label : 'name',
+                value : '_id'
+            });
 
-                form : {
-                    bindings : {
-                        'input#name' : 'value:name',
-                        '#type' : 'value: typeId, options:$types'
-                    },
-                    bindingSources :{
-                        types: types
-                    }, 
-                    defaults:{
-                        "name" : "",
-                        "typeId" : ""
-                    }
+            var EventModel = Core.BaseModel.extend({
+                defaults:{
+                    "name" : "",
+                    "typeId" : ""
                 }
-            }).start();
+            });
+
+            var EventForm = Core.FormView.extend({
+                template : $('#details').html(),
+                // events : {
+                //     "click .test" : "test"
+                // },
+                // test : function(){
+                //     alert('test');
+                // },
+                bindings : {
+                    'input#name' : 'value:name',
+                    '#type' : 'value: typeId, options:$types'
+                },
+                bindingSources : {
+                    types: types
+                }
+                ,
+                initialize : function(){
+                    Core.FormView.prototype.initialize.apply(this, arguments);
+
+                    console.log('can init some widget her');
+                }
+            });
+
+
+            Core.GRUD({
+                resurce : 'api/events',
+                container : '#container',
+
+                Model : EventModel,
+                FormView : EventForm 
+
+            }).list();
         });
     </script>
 
@@ -44,22 +66,39 @@
 
 <script type="text/template" id="list">
 <a href="#" class="btn add">add</a>
-	<ul data-bind='collection:$collection'>
-	<ul>
+    <table class="table table-bordered">
+        <thead>
+            <th>Name</th>
+            <th>Actions</th>
+        </thead>
+        <tbody data-bind='collection:$collection'>
+        </tbody>
+    </table>
 </script>
 
 <script type="text/template" id="item">
-	<a href="#" class="edit btn">edit</a> <%= name %> 2 <a hre='#' class="delete">delete</a>
+    <td><%= name %></td>
+    <td>
+        <a href="#" class="btn-mini edit btn">edit</a> 
+        <a hre='#' class="btn-mini btn delete">delete</a>
+    </td>
 </script>
 
 <script type="text/template" id="details">
 	<input id="name" type="text" />
-	<a href="#" class="btn save">save</a>
-	<a href="#" class="btn cansel">cansel</a>
-    <select id="type"></select>
+	<select id="type"></select>
+    <a href="#" class="btn save">save</a>
+    <a href="#" class="btn cansel">cansel</a>
+    
+<a href="#" class="btn test">test</a>
+    
+
 </script>
 
 <div class="container">
-
+    <div class="row" >
+        <div class="span12" id="container">
+        </dev>    
+    <div>
 </div>
  </html>
